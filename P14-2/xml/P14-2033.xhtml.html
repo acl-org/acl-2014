@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Effective Document-Level Features for Chinese Patent Word Segmentation</title>
+<!--Generated on Wed Jun 11 17:42:10 2014 by LaTeXML (version 0.8.0) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on .-->
+
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8"/>
+<link rel="stylesheet" href="LaTeXML.css" type="text/css"/>
+<link rel="stylesheet" href="ltx-article.css" type="text/css"/>
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<div class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">Effective Document-Level Features for Chinese Patent Word Segmentation</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Si Li 
+<br class="ltx_break"/>Chinese Language Processing Group 
+<br class="ltx_break"/>Brandeis University 
+<br class="ltx_break"/>Waltham, MA 02453, USA
+<br class="ltx_break"/><span class="ltx_text ltx_font_typewriter">lisi@brandeis.edu</span> 
+<br class="ltx_break"/>&amp;Nianwen Xue 
+<br class="ltx_break"/>Chinese Language Processing Group 
+<br class="ltx_break"/>Brandeis University 
+<br class="ltx_break"/>Waltham, MA 02453, USA 
+<br class="ltx_break"/><span class="ltx_text ltx_font_typewriter">xuen@brandeis.edu</span> 
+<br class="ltx_break"/>
+</span></span></div>
+<div class="ltx_date ltx_role_creation"/>
+
+<div class="ltx_abstract"><h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">A patent is a property right for an invention granted by the government to the inventor. Patents often have a high concentration of scientific and technical terms that are rare in everyday language. However, some scientific and technical terms usually appear with high frequency only in one specific patent. In this paper, we propose a pragmatic approach to Chinese word segmentation on patents where we train a sequence labeling model based on a group of novel document-level features. Experiments show that the accuracy of our model reached 96.3% (<math xmlns="http://www.w3.org/1998/Math/MathML" id="m1" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score) on the development set and 95.0% on a held-out test set.</p>
+</div>
+<div id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section"><span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p class="ltx_p">It is well known that Chinese text does not come with natural word delimiters, and the first step for many Chinese language processing tasks is word segmentation, the automatic determination of word boundaries in Chinese text. Tremendous progress was made in this area in the last decade or so due to the availability of large-scale human segmented corpora coupled with better statistical modeling techniques. On the data side, there exist a few large-scale human annotated corpora based on established word segmentation standards, and these include the Chinese TreeBank <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib13" title="The Penn Chinese TreeBank: Phrase Structure Annotation of a Large Corpus." class="ltx_ref">20</a>]</cite>, the Sinica Balanced Corpus <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib14" title="Sinica Corpus: Design Methodology for Balanced Corpora." class="ltx_ref">1</a>]</cite>, the PKU Peoples’ Daily Corpus <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib15" title="Chinese word segmentation at Peking University." class="ltx_ref">3</a>]</cite>, and the LIVAC balanced corpus <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib16" title="A Synchronous Chinese Language Corpus from Different Speech Communities: Construction and Application." class="ltx_ref">17</a>]</cite>. Another driver for the improvement in Chinese word segmentation accuracy comes from the evolution of statistical modeling techniques. Dictionaries used to play a central role in early heuristics-based word segmentation techniques  <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib34" title="Word Identification for Mandarin Chinese Sentences." class="ltx_ref">2</a>, <a href="P14-2033.xhtml.html#bib.bib17" title="A Stochastic Finite-State Word-Segmentation Algorithm for Chinese." class="ltx_ref">13</a>]</cite>. Modern word segmentation systems have moved away from dictionary-based approaches in favor of character tagging approaches. This allows the word segmentation problem to be modeled as a sequence labeling problem, and lends itself to discriminative sequence modeling techniques <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib4" title="Chinese Word Segmentation as Character Tagging." class="ltx_ref">22</a>, <a href="P14-2033.xhtml.html#bib.bib18" title="Chinese Segmentation and New Word Detection using Conditional Random Fields." class="ltx_ref">12</a>]</cite>. With these better modeling techniques, state-of-the-art systems routinely report accuracy in the high 90%, and a few recent systems report accuracies of over 98% in <math xmlns="http://www.w3.org/1998/Math/MathML" id="S1.p1.m1" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib20" title="A Stacked Sub-Word Model for Joint Chinese Word Segmentation and Part-of-Speech Tagging." class="ltx_ref">16</a>, <a href="P14-2033.xhtml.html#bib.bib21" title="Graph-based Semi-Supervised Model for Joint Chinese Word Segmentation and Part-of-Speech Tagging." class="ltx_ref">24</a>]</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p class="ltx_p">Chinese word segmentation is not a solved problem however and significant challenges remain. Advanced word segmentation systems perform very well in domains such as newswire where everyday language is used and there is a large amount of human annotated training data. There is often a rapid degradation in performance when systems trained on one domain (let us call it the <span class="ltx_text ltx_font_italic">source</span> domain) are used to segment data in a different domain (let us call it the <span class="ltx_text ltx_font_italic">target</span> domain). This problem is especially severe when the target domain is distant from the source domain. This is the problem we are facing when we perform word segmentation on Chinese patent data. The word segmentation accuracy on Chinese patents is very poor if the word segmentation model is trained on the Chinese TreeBank data, which consists of data sources from a variety of genres but no patents.
+To address this issue, we annotated a corpus of 142 patents which contain about 440K words according to the Chinese TreeBank standards. We trained a character-tagging based CRF model for word segmentation, and based on the writing style of patents, we propose a group of document-level features as well as a novel character part-of-speech feature (C_POS). Our results show these new features are effective and we are able to achieve an accuracy of 96.3% (<math xmlns="http://www.w3.org/1998/Math/MathML" id="S1.p2.m1" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score) on the development set and 95% (<math xmlns="http://www.w3.org/1998/Math/MathML" id="S1.p2.m2" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score) on the test set.</p>
+</div><span class="ltx_ERROR undefined">{CJK}</span>
+<div id="S1.p3" class="ltx_para">
+<p class="ltx_p">GBKkai</p>
+</div>
+</div>
+<div id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section"><span class="ltx_tag ltx_tag_section">2 </span>Method</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p class="ltx_p">We adopt the character-based sequence labeling approach, first proposed in <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib4" title="Chinese Word Segmentation as Character Tagging." class="ltx_ref">22</a>]</cite>, as our modeling technique for its simplicity and effectiveness. This approach treats each sentence as a sequence of characters and assigns to each character a label that indicates its position in the word. In this paper, we use the <span class="ltx_text ltx_font_italic">BMES</span> tag set to indicate the character positions. The tag set has four labels that represent for possible positions a character can occupy within a word: <span class="ltx_text ltx_font_italic">B</span> for beginning, <span class="ltx_text ltx_font_italic">M</span> for middle, <span class="ltx_text ltx_font_italic">E</span> for ending, and <span class="ltx_text ltx_font_italic">S</span> for a single character as a word. After each character in a sentence is tagged with a BMES label, a sequence of words can be derived from this labeled character sequence.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p class="ltx_p">We train a Conditional Random Field (CRF) <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib6" title="Conditional random fields: Probabilistic models for segmenting and labeling sequence data." class="ltx_ref">7</a>]</cite> model for this sequence labeling. When extracting features to train a CRF model from a sequence of <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.p2.m1" class="ltx_Math" alttext="n" display="inline"><mi>n</mi></math> characters <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.p2.m2" class="ltx_Math" alttext="C_{1}C_{2}...C_{i-1}C_{i}C_{i+1}...C_{n}" display="inline"><mrow><msub><mi>C</mi><mn>1</mn></msub><mo>⁢</mo><msub><mi>C</mi><mn>2</mn></msub><mo>⁢</mo><mi mathvariant="normal">…</mi><mo>⁢</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>-</mo><mn>1</mn></mrow></msub><mo>⁢</mo><msub><mi>C</mi><mi>i</mi></msub><mo>⁢</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>⁢</mo><mi mathvariant="normal">…</mi><mo>⁢</mo><msub><mi>C</mi><mi>n</mi></msub></mrow></math>, we extract features for each character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.p2.m3" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> from a fixed window. We start with a set of core features extracted from the annotated corpus that have been shown to be effective in previous works and propose some new features for patent word segmentation. We describe each group of features in detail below.</p>
+</div>
+<div id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection"><span class="ltx_tag ltx_tag_subsection">2.1 </span>Character features (CF)</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p class="ltx_p">When predicting the position of a character within a word, features based on its surrounding characters and their types have shown to be the most effective features for this task <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib4" title="Chinese Word Segmentation as Character Tagging." class="ltx_ref">22</a>]</cite>. There
+are some variations of these features depending on the window size in terms of the number of characters to examine, and here we adopt the feature templates used in <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib1" title="Chinese Part-of-Speech Tagging: One-at-a-Time or All-at-Once? Word-Based or Character-Based?" class="ltx_ref">10</a>]</cite>.</p>
+</div>
+<div id="S2.SS1.SSS0.P1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Character N-gram features</h4>
+
+<div id="S2.SS1.SSS0.P1.p1" class="ltx_para">
+<p class="ltx_p">The N-gram features are various combinations of the surrounding characters of the candidate character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS1.SSS0.P1.p1.m1" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>. The 10 features we used are listed below:</p>
+</div>
+<div id="S2.SS1.SSS0.P1.p2" class="ltx_para">
+<ul id="I1" class="ltx_itemize">
+<li id="I1.i1" class="ltx_item" style="list-style-type:none;"><span class="ltx_tag ltx_tag_itemize">•</span> 
+<div id="I1.i1.p1" class="ltx_para">
+<p class="ltx_p">Character unigrams: <math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i1.p1.m1" class="ltx_Math" alttext="C_{k}" display="inline"><msub><mi>C</mi><mi>k</mi></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i1.p1.m2" class="ltx_Math" alttext="i-3&lt;k&lt;i+3" display="inline"><mrow><mrow><mi>i</mi><mo>-</mo><mn>3</mn></mrow><mo>&lt;</mo><mi>k</mi><mo>&lt;</mo><mrow><mi>i</mi><mo>+</mo><mn>3</mn></mrow></mrow></math>)</p>
+</div></li>
+<li id="I1.i2" class="ltx_item" style="list-style-type:none;"><span class="ltx_tag ltx_tag_itemize">•</span> 
+<div id="I1.i2.p1" class="ltx_para">
+<p class="ltx_p">Character bigrams: <math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m1" class="ltx_Math" alttext="C_{k}" display="inline"><msub><mi>C</mi><mi>k</mi></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m2" class="ltx_Math" alttext="C_{k+1}" display="inline"><msub><mi>C</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m3" class="ltx_Math" alttext="i-3&lt;k&lt;i+2" display="inline"><mrow><mrow><mi>i</mi><mo>-</mo><mn>3</mn></mrow><mo>&lt;</mo><mi>k</mi><mo>&lt;</mo><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></mrow></math>) and <math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m4" class="ltx_Math" alttext="C_{k-1}" display="inline"><msub><mi>C</mi><mrow><mi>k</mi><mo>-</mo><mn>1</mn></mrow></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m5" class="ltx_Math" alttext="C_{k+1}" display="inline"><msub><mi>C</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I1.i2.p1.m6" class="ltx_Math" alttext="k=i" display="inline"><mrow><mi>k</mi><mo>=</mo><mi>i</mi></mrow></math>)</p>
+</div></li>
+</ul>
+</div>
+</div>
+<div id="S2.SS1.SSS0.P2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Character type N-gram features</h4>
+
+<div id="S2.SS1.SSS0.P2.p1" class="ltx_para">
+<p class="ltx_p">We classify the characters in Chinese text into 4 types: Chinese characters or <span class="ltx_text ltx_font_italic">hanzi</span>, English letters, numbers and others. <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS1.SSS0.P2.p1.m1" class="ltx_Math" alttext="T_{i}" display="inline"><msub><mi>T</mi><mi>i</mi></msub></math> is the character type of <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS1.SSS0.P2.p1.m2" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>. The character type has been used in the previous works in various forms <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib1" title="Chinese Part-of-Speech Tagging: One-at-a-Time or All-at-Once? Word-Based or Character-Based?" class="ltx_ref">10</a>, <a href="P14-2033.xhtml.html#bib.bib26" title="Automatic Adaptation of Annotation Standards: Chinese Word Segmentation and POS Tagging - A Case Study." class="ltx_ref">5</a>]</cite>, and the 4 features we use are as follows:</p>
+</div>
+<div id="S2.SS1.SSS0.P2.p2" class="ltx_para">
+<ul id="I2" class="ltx_itemize">
+<li id="I2.i1" class="ltx_item" style="list-style-type:none;"><span class="ltx_tag ltx_tag_itemize">•</span> 
+<div id="I2.i1.p1" class="ltx_para">
+<p class="ltx_p">Character type unigrams: <math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i1.p1.m1" class="ltx_Math" alttext="T_{k}" display="inline"><msub><mi>T</mi><mi>k</mi></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i1.p1.m2" class="ltx_Math" alttext="k=i" display="inline"><mrow><mi>k</mi><mo>=</mo><mi>i</mi></mrow></math>)</p>
+</div></li>
+<li id="I2.i2" class="ltx_item" style="list-style-type:none;"><span class="ltx_tag ltx_tag_itemize">•</span> 
+<div id="I2.i2.p1" class="ltx_para">
+<p class="ltx_p">Character type bigrams: <math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m1" class="ltx_Math" alttext="T_{k}" display="inline"><msub><mi>T</mi><mi>k</mi></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m2" class="ltx_Math" alttext="T_{k+1}" display="inline"><msub><mi>T</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m3" class="ltx_Math" alttext="i-2&lt;k&lt;i+1" display="inline"><mrow><mrow><mi>i</mi><mo>-</mo><mn>2</mn></mrow><mo>&lt;</mo><mi>k</mi><mo>&lt;</mo><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></mrow></math>) and <math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m4" class="ltx_Math" alttext="T_{k-1}" display="inline"><msub><mi>T</mi><mrow><mi>k</mi><mo>-</mo><mn>1</mn></mrow></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m5" class="ltx_Math" alttext="T_{k+1}" display="inline"><msub><mi>T</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></math> (<math xmlns="http://www.w3.org/1998/Math/MathML" id="I2.i2.p1.m6" class="ltx_Math" alttext="k=i" display="inline"><mrow><mi>k</mi><mo>=</mo><mi>i</mi></mrow></math>)</p>
+</div></li>
+</ul>
+</div>
+<div id="S2.SS1.SSS0.P2.p3" class="ltx_para">
+<p class="ltx_p">Starting with this baseline, we extract some new features to improve Chinese patent word segmentation accuracy.</p>
+</div>
+</div>
+</div>
+<div id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection"><span class="ltx_tag ltx_tag_subsection">2.2 </span>POS of single-character words (C_POS)</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p class="ltx_p">Chinese words are composed of Chinese hanzi, and an overwhelming majority of these Chinese characters can be single-character words themselves in some context. In fact, most of the multi-character words are compounds that are 2-4 characters in length. The formation of these compound words is not random and abide by word formation rules that are similar to the formation of phrases <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib28" title="Defining and identifying words in Chinese." class="ltx_ref">21</a>, <a href="P14-2033.xhtml.html#bib.bib27" title="The Morphology of Chinese: a cognitive and linguistic approach" class="ltx_ref">11</a>]</cite>. In fact, the Chinese TreeBank word segmentation guidelines <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib12" title="The segmentation guidelines for the Penn Chinese Treebank (3.0)." class="ltx_ref">19</a>]</cite> specify how words are segmented based on the part-of-speech (POS) of their component characters. We hypothesize that the POS tags of the single-character words would be useful information to help predict how they form the compound words, and these POS tags are more fine-grained information than the character type information described in the previous section, but are more robust and more generalizable than the characters themselves.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p class="ltx_p">Since we do not have POS-tagged patent data, we extract this information from the Chinese TreeBank (CTB) 7.0, a 1.2-million-word out-of-domain dataset. We extract the POS tags for all the single-character words in the CTB. Some of the single-character words will have more than one POS tag. In this case, we select the POS tag with the highest frequency as the C_POS tag for this character. The result of this extraction process is a list of single-character Chinese words, each of which is assigned a single POS tag.</p>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p class="ltx_p">When extracting features for the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS2.p3.m1" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>, if <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS2.p3.m2" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> is in this list, the POS tag of <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS2.p3.m3" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> is used as a feature for this target character.</p>
+</div>
+</div>
+<div id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection"><span class="ltx_tag ltx_tag_subsection">2.3 </span>Document-level features</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p class="ltx_p">A patent is a property right for an invention granted by the government to the inventor, and many of the patents have a high concentration of scientific and technical terms. From a machine learning perspective, these terms are hard to detect and segment because they are often "new words" that are not seen in everyday language. These technical terminologies also tend to be very sparse, either because they are related to the latest invention that has not made into everyday language, or because our limited patent dataset cannot possibly cover all possible technical topics. However, these technical terms are also topical and they tend to have high relative frequency within a patent document even though they are sparse in the entire patent data set. We attempt to exploit this distribution property with some document-level features which are extracted based on each patent document.</p>
+</div>
+<div id="S2.SS3.SSS0.P1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Longest n-gram features (LNG)</h4>
+
+<div id="S2.SS3.SSS0.P1.p1" class="ltx_para">
+<p class="ltx_p">We propose a longest n-gram (LNG) feature as a document-level feature. Each patent document is treated as an independent unit and the candidate longest n-gram sequence lists for each patent are obtained as described in Algorithm <a href="P14-2033.xhtml.html#S2.SS3.SSS0.P1" title="Longest n-gram features (LNG) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.3</span></a>.</p>
+</div><span class="ltx_ERROR undefined">{algorithm}</span>
+<div id="S2.SS3.SSS0.P1.p2" class="ltx_para">
+<p class="ltx_p">[!tp]</p>
+</div>
+<div id="S2.SS3.SSS0.P1.p3" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_caption">Longest n-gram sequence extraction.</span></p>
+</div><span class="ltx_ERROR undefined">{algorithmic}</span>
+<div id="S2.SS3.SSS0.P1.p4" class="ltx_para">
+<p class="ltx_p">[1]</p>
+</div><span class="ltx_ERROR undefined">\REQUIRE</span>
+<div id="S2.SS3.SSS0.P1.p5" class="ltx_para">
+<br class="ltx_break"/>
+</div>
+<div id="S2.SS3.SSS0.P1.p6" class="ltx_para">
+<p class="ltx_p">Sentences {<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p6.m1" class="ltx_Math" alttext="s_{i}" display="inline"><msub><mi>s</mi><mi>i</mi></msub></math>} in patent <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p6.m2" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>;</p>
+</div><span class="ltx_ERROR undefined">\ENSURE</span>
+<div id="S2.SS3.SSS0.P1.p7" class="ltx_para">
+<br class="ltx_break"/>
+</div>
+<div id="S2.SS3.SSS0.P1.p8" class="ltx_para">
+<p class="ltx_p">Longest n-gram sequence list for <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p8.m1" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>;
+<br class="ltx_break"/></p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p9" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">For</span> each sentence <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m1" class="ltx_Math" alttext="s_{i}" display="inline"><msub><mi>s</mi><mi>i</mi></msub></math> in <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m2" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math> <span class="ltx_text ltx_font_bold">do</span>:
+<br class="ltx_break"/> n-gram sequence extraction 
+<br class="ltx_break"/> (2<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m3" class="ltx_Math" alttext="\leq" display="inline"><mo>≤</mo></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m4" class="ltx_Math" alttext="n" display="inline"><mi>n</mi></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m5" class="ltx_Math" alttext="\leq" display="inline"><mo>≤</mo></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m6" class="ltx_Math" alttext="length" display="inline"><mrow><mi>l</mi><mo>⁢</mo><mi>e</mi><mo>⁢</mo><mi>n</mi><mo>⁢</mo><mi>g</mi><mo>⁢</mo><mi>t</mi><mo>⁢</mo><mi>h</mi></mrow></math>(<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p9.m7" class="ltx_Math" alttext="s_{i}" display="inline"><msub><mi>s</mi><mi>i</mi></msub></math>));</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p10" class="ltx_para">
+<p class="ltx_p">Count the frequency of each n-gram sequence;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p11" class="ltx_para">
+<p class="ltx_p">Delete the sequence if its frequency<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p11.m1" class="ltx_Math" alttext="&lt;" display="inline"><mo>&lt;</mo></math>2;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p12" class="ltx_para">
+<p class="ltx_p">Delete sequence <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p12.m1" class="ltx_Math" alttext="i" display="inline"><mi>i</mi></math> if it is contained in a longer sequence <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p12.m2" class="ltx_Math" alttext="j" display="inline"><mi>j</mi></math>;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p13" class="ltx_para">
+<p class="ltx_p">All the remaining sequences form a longest n-gram sequence list for <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p13.m1" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>;</p>
+</div><span class="ltx_ERROR undefined">\RETURN</span>
+<div id="S2.SS3.SSS0.P1.p14" class="ltx_para">
+<p class="ltx_p">Longest n-gram sequences list.</p>
+</div>
+<div id="S2.SS3.SSS0.P1.p15" class="ltx_para">
+<p class="ltx_p">For a given patent, the LNG feature value for the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m1" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>’s LNG is set to 'S' if the bigram (<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m2" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m3" class="ltx_Math" alttext="C_{i+1}" display="inline"><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></math>) are the first two characters of an n-gram sequence in this patent’s longest n-gram sequence list. If (<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m4" class="ltx_Math" alttext="C_{i-1}" display="inline"><msub><mi>C</mi><mrow><mi>i</mi><mo>-</mo><mn>1</mn></mrow></msub></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m5" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>) are the last two characters of an n-gram sequence in this patent’s longest n-gram sequence list, the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m6" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>’s LNG is set to 'F'. It is set to 'O' otherwise. If <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m7" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> can be labeled as both 'S' and 'F' at the same time, label 'T' will be given as the final label. For example, if '<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m8" class="ltx_Math" alttext="\alpha" display="inline"><mi>α</mi></math>' is the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m9" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> in patent A and the sequence '<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m10" class="ltx_Math" alttext="\alpha" display="inline"><mi>α</mi></math>£­¸ÉÈÅËØ' is in patent A’s longest n-gram sequence list. If the character next to '<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p15.m11" class="ltx_Math" alttext="\alpha" display="inline"><mi>α</mi></math>' is '£­', the value of the LNG feature is set to 'S'. If the next character is not '£­', the value of the LNG feature is set to 'O'.</p>
+</div><span class="ltx_ERROR undefined">{algorithm}</span>
+<div id="S2.SS3.SSS0.P1.p16" class="ltx_para">
+<p class="ltx_p">[!tp]</p>
+</div>
+<div id="S2.SS3.SSS0.P1.p17" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_caption">Pseudo KL divergence.</span></p>
+</div><span class="ltx_ERROR undefined">{algorithmic}</span>
+<div id="S2.SS3.SSS0.P1.p18" class="ltx_para">
+<p class="ltx_p">[1]</p>
+</div><span class="ltx_ERROR undefined">\REQUIRE</span>
+<div id="S2.SS3.SSS0.P1.p19" class="ltx_para">
+<br class="ltx_break"/>
+</div>
+<div id="S2.SS3.SSS0.P1.p20" class="ltx_para">
+<p class="ltx_p">Sentences {<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p20.m1" class="ltx_Math" alttext="s_{i}" display="inline"><msub><mi>s</mi><mi>i</mi></msub></math>} in patent <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p20.m2" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>;</p>
+</div><span class="ltx_ERROR undefined">\ENSURE</span>
+<div id="S2.SS3.SSS0.P1.p21" class="ltx_para">
+<br class="ltx_break"/>
+</div>
+<div id="S2.SS3.SSS0.P1.p22" class="ltx_para">
+<p class="ltx_p">Pseudo KL divergence values between different characters in <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p22.m1" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math>;
+<br class="ltx_break"/></p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p23" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">For</span> each sentence <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p23.m1" class="ltx_Math" alttext="s_{i}" display="inline"><msub><mi>s</mi><mi>i</mi></msub></math> in <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p23.m2" class="ltx_Math" alttext="P_{i}" display="inline"><msub><mi>P</mi><mi>i</mi></msub></math> <span class="ltx_text ltx_font_bold">do</span>:
+<br class="ltx_break"/> trigram sequences extraction;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p24" class="ltx_para">
+<p class="ltx_p">Count the frequency of each trigram;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p25" class="ltx_para">
+<p class="ltx_p">Delete the trigram if its frequency<math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p25.m1" class="ltx_Math" alttext="&lt;" display="inline"><mo>&lt;</mo></math>2;</p>
+</div><span class="ltx_ERROR undefined">\STATE</span>
+<div id="S2.SS3.SSS0.P1.p26" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">For</span> <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p26.m1" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> in trigram <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p26.m2" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p26.m3" class="ltx_Math" alttext="C_{i+1}" display="inline"><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></math><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p26.m4" class="ltx_Math" alttext="C_{i+2}" display="inline"><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></msub></math> <span class="ltx_text ltx_font_bold">do</span> :</p>
+<table id="S2.E1" class="ltx_equation">
+
+<tr class="ltx_equation ltx_align_baseline">
+<td class="ltx_eqn_center_padleft"/>
+<td class="ltx_align_center"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.E1.m1" class="ltx_Math" alttext="PKL(C_{i},C_{i+1})=p({C_{i}}^{1})log\frac{p({C_{i}}^{1})}{p({C_{i+1}}^{2})}" display="block"><mrow><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow><mo>⁢</mo><mi>l</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>g</mi><mo>⁢</mo><mfrac><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow></mrow><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><none/><none/><mn>2</mn></mmultiscripts><mo>)</mo></mrow></mrow></mfrac></mrow></mrow></math></td>
+<td class="ltx_eqn_center_padright"/>
+<td rowspan="1" class="ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation">(1)</span></td></tr>
+</table>
+<table id="S2.E2" class="ltx_equation">
+
+<tr class="ltx_equation ltx_align_baseline">
+<td class="ltx_eqn_center_padleft"/>
+<td class="ltx_align_center"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.E2.m1" class="ltx_Math" alttext="PKL(C_{i},C_{i+2})=p({C_{i}}^{1})log\frac{p({C_{i}}^{1})}{p({C_{i+2}}^{3})}" display="block"><mrow><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow><mo>⁢</mo><mi>l</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>g</mi><mo>⁢</mo><mfrac><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow></mrow><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow><none/><none/><mn>3</mn></mmultiscripts><mo>)</mo></mrow></mrow></mfrac></mrow></mrow></math></td>
+<td class="ltx_eqn_center_padright"/>
+<td rowspan="1" class="ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation">(2)</span></td></tr>
+</table>
+</div>
+<div id="S2.SS3.SSS0.P1.p27" class="ltx_para">
+<p class="ltx_p">The superscripts {1,2,3} indicate the character position in trigram sequences;</p>
+</div><span class="ltx_ERROR undefined">\RETURN</span>
+<div id="S2.SS3.SSS0.P1.p28" class="ltx_para">
+<p class="ltx_p"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p28.m1" class="ltx_Math" alttext="PKL(C_{i},C_{i+1})" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p28.m2" class="ltx_Math" alttext="PKL(C_{i},C_{i+2})" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow></math> for the first character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P1.p28.m3" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math> in each trigram.</p>
+</div>
+</div>
+<div id="S2.SS3.SSS0.P2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Pseudo Kullback-Leibler divergence (PKL)</h4>
+
+<div id="S2.SS3.SSS0.P2.p1" class="ltx_para">
+<p class="ltx_p">The second document-level feature we propose is the Pseudo Kullback-Leibler divergence feature which is calculated following the form of the Kullback-Leibler divergence. The relative position information is very important for Chinese word segmentation as a sequence labeling task. Characters <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m1" class="ltx_Math" alttext="XY" display="inline"><mrow><mi>X</mi><mo>⁢</mo><mi>Y</mi></mrow></math> may constitute a meaningful word, but characters <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m2" class="ltx_Math" alttext="YX" display="inline"><mrow><mi>Y</mi><mo>⁢</mo><mi>X</mi></mrow></math> may not be. Therefore, if we want to determine whether character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m3" class="ltx_Math" alttext="X" display="inline"><mi>X</mi></math> and character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m4" class="ltx_Math" alttext="Y" display="inline"><mi>Y</mi></math> can form a word, the relative position of these two characters should be considered. We adopt a pseudo KL divergence with the relative position information as a measure of the association strength between two adjacent characters <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m5" class="ltx_Math" alttext="X" display="inline"><mi>X</mi></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m6" class="ltx_Math" alttext="Y" display="inline"><mi>Y</mi></math>. The pseudo KL divergence is an asymmetric measure. The <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m7" class="ltx_Math" alttext="PKL" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi></mrow></math> value between character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m8" class="ltx_Math" alttext="X" display="inline"><mi>X</mi></math> and character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p1.m9" class="ltx_Math" alttext="Y" display="inline"><mi>Y</mi></math> is described in Algorithm <a href="P14-2033.xhtml.html#S2.SS3.SSS0.P1" title="Longest n-gram features (LNG) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.3</span></a>.</p>
+</div>
+<div id="S2.SS3.SSS0.P2.p2" class="ltx_para">
+<p class="ltx_p">The <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p2.m1" class="ltx_Math" alttext="PKL" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi></mrow></math> values are real numbers and are sparse. A common solution to sparsity reduction is binning. We rank the <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p2.m2" class="ltx_Math" alttext="PKL" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi></mrow></math> values between two adjacent characters in each patent from low to high, and then divide all values into five bins. Each bin is assigned a unique ID and all <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p2.m3" class="ltx_Math" alttext="PKL" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>K</mi><mo>⁢</mo><mi>L</mi></mrow></math> values in the same bin are replaced by this ID. This ID is then used as the PKL feature value for the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P2.p2.m4" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>.</p>
+</div>
+</div>
+<div id="S2.SS3.SSS0.P3" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Pointwise Mutual information (PMI)</h4>
+
+<div id="S2.SS3.SSS0.P3.p1" class="ltx_para">
+<p class="ltx_p">Pointwise Mutual information has been widely used in previous work on Chinese word segmentation <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib3" title="Enhancing Chinese Word Segmentation Using Unlabeled Data." class="ltx_ref">14</a>, <a href="P14-2033.xhtml.html#bib.bib7" title="Exploring Representations from Unlabeled Data with Co-training for Chinese Word Segmentation." class="ltx_ref">26</a>]</cite> and it is a measure of the mutual dependence of two strings and reflects the tendency of two strings appearing in one word. In previous work, PMI statistics are gathered on the entire data set, and here we gather PMI statistics for each patent in an attempt to capture character strings with high PMI in a particular patent. The procedure for calculating PMI is the same as that for computing pseudo KL divergence, but the functions (<a href="P14-2033.xhtml.html#S2.E1" title="(1) ‣ Longest n-gram features (LNG) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>) and (<a href="P14-2033.xhtml.html#S2.E2" title="(2) ‣ Longest n-gram features (LNG) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>) are replaced with the following functions:</p>
+</div>
+<div id="S2.SS3.SSS0.P3.p2" class="ltx_para">
+<table id="S2.E3" class="ltx_equation">
+
+<tr class="ltx_equation ltx_align_baseline">
+<td class="ltx_eqn_center_padleft"/>
+<td class="ltx_align_center"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.E3.m1" class="ltx_Math" alttext="PMI(C_{i},C_{i+1})=log\frac{p({C_{i}}^{1},{C_{i+1}}^{2})}{p({C_{i}}^{1})p({C_{%&#10;i+1}}^{2})}" display="block"><mrow><mrow><mi>P</mi><mo>⁢</mo><mi>M</mi><mo>⁢</mo><mi>I</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mi>l</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>g</mi><mo>⁢</mo><mfrac><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>,</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><none/><none/><mn>2</mn></mmultiscripts></mrow><mo>)</mo></mrow></mrow><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow><mo>⁢</mo><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><none/><none/><mn>2</mn></mmultiscripts><mo>)</mo></mrow></mrow></mfrac></mrow></mrow></math></td>
+<td class="ltx_eqn_center_padright"/>
+<td rowspan="1" class="ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation">(3)</span></td></tr>
+</table>
+<table id="S2.E4" class="ltx_equation">
+
+<tr class="ltx_equation ltx_align_baseline">
+<td class="ltx_eqn_center_padleft"/>
+<td class="ltx_align_center"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.E4.m1" class="ltx_Math" alttext="PMI(C_{i},C_{i+2})=log\frac{p({C_{i}}^{1},{C_{i+2}}^{3})}{p({C_{i}}^{1})p({C_{%&#10;i+2}}^{3})}" display="block"><mrow><mrow><mi>P</mi><mo>⁢</mo><mi>M</mi><mo>⁢</mo><mi>I</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mi>l</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>g</mi><mo>⁢</mo><mfrac><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>,</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow><none/><none/><mn>3</mn></mmultiscripts></mrow><mo>)</mo></mrow></mrow><mrow><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mi>i</mi><none/><none/><mn>1</mn></mmultiscripts><mo>)</mo></mrow><mo>⁢</mo><mi>p</mi><mo>⁢</mo><mrow><mo>(</mo><mmultiscripts><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow><none/><none/><mn>3</mn></mmultiscripts><mo>)</mo></mrow></mrow></mfrac></mrow></mrow></math></td>
+<td class="ltx_eqn_center_padright"/>
+<td rowspan="1" class="ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation">(4)</span></td></tr>
+</table>
+</div>
+<div id="S2.SS3.SSS0.P3.p3" class="ltx_para">
+<p class="ltx_p">For the target character <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P3.p3.m1" class="ltx_Math" alttext="C_{i}" display="inline"><msub><mi>C</mi><mi>i</mi></msub></math>, we obtain the values for <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P3.p3.m2" class="ltx_Math" alttext="PMI(C_{i},C_{i+1})" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>M</mi><mo>⁢</mo><mi>I</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" id="S2.SS3.SSS0.P3.p3.m3" class="ltx_Math" alttext="PMI(C_{i},C_{i+2})" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>M</mi><mo>⁢</mo><mi>I</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><msub><mi>C</mi><mi>i</mi></msub><mo>,</mo><msub><mi>C</mi><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow></msub></mrow><mo>)</mo></mrow></mrow></math>. In each patent document, we rank these values from high to low and divided them into five bins. Then the PMI feature values are represented by the bin IDs.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section"><span class="ltx_tag ltx_tag_section">3 </span>Experiments</h2>
+
+<div id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection"><span class="ltx_tag ltx_tag_subsection">3.1 </span>Data preparation</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p class="ltx_p">We annotated 142 Chinese patents following the CTB word segmentation guidelines <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib12" title="The segmentation guidelines for the Penn Chinese Treebank (3.0)." class="ltx_ref">19</a>]</cite>. Since the original guidelines are mainly designed to cover non-technical everyday language, many scientific and technical terms found in patents are not covered in the guidelines. We had to extend the CTB word segmentation guidelines to handle these new words. Deciding on how to segment these scientific and technical terms is a big challenge since these patents cover many different technical fields and without proper technical background, even a native speaker has difficulty in segmenting them properly. For difficult scientific and technical terms, we consult BaiduBaike ("Baidu Encyclopedia")<span class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup>http://baike.baidu.com/</span></span></span>, which we use as a scientific and technical terminology dictionary during our annotation. There are still many words that do not appear in BaiduBaiKe, and these include chemical names and formulas. These chemical names and formulas (e.g., ¡°£±£­äå£­£³£­ÂÈ±ûÍé/1-bromo-3-chloropropane¡±) are usually very long, and unlike everyday words, they often have numbers and punctuation marks in them. We decided not to try segmenting the internal structures of such chemical terms and treat them as single words, because without a technical background in chemistry, it is very hard to segment their internal structures consistently.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p class="ltx_p">The annotated patent dataset covers many topics and they include chemistry, mechanics, medicine, etc. If we consider the words in our <span class="ltx_text ltx_font_italic">annotated dataset</span> but not in CTB 7.0 data as <span class="ltx_text ltx_font_italic">new words</span> (or out-of-vocabulary, OOV), the new words account for 18.3% of the patent corpus by token and 68.1% by type. This shows that there is a large number of words in the patent corpus that are not in the everyday language vocabulary. Table <a href="P14-2033.xhtml.html#S3.T1" title="Table 1 ‣ 3.1 Data preparation ‣ 3 Experiments ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a> presents the data split used in our experiments.</p>
+</div>
+<div id="S3.T1" class="ltx_table">
+<div class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 1: </span> Training, development and test data on Patent data</div>
+<table class="ltx_tabular ltx_centering ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">Data set</th>
+<th class="ltx_td ltx_align_center ltx_border_r ltx_border_t"># of words</th>
+<th class="ltx_td ltx_align_center ltx_border_r ltx_border_t"># of patent</th></tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">Training</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">345336</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">113</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">Devel.</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">46196</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">14</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r ltx_border_t">Test</th>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">48351</td>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_t">15</td></tr>
+</tbody>
+</table>
+</div>
+<div id="S3.T2" class="ltx_table">
+<div class="ltx_caption"><span class="ltx_tag ltx_tag_table">Table 2: </span> Segmentation performance with different feature sets on different datasets. </div>
+<table class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t">Train set</th>
+<th class="ltx_td ltx_align_center ltx_border_rr ltx_border_t">Test set</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">Features</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.T2.m1" class="ltx_Math" alttext="P" display="inline"><mi>P</mi></math></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.T2.m2" class="ltx_Math" alttext="R" display="inline"><mi>R</mi></math></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.T2.m3" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t"><math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.T2.m4" class="ltx_Math" alttext="R_{OOV}" display="inline"><msub><mi>R</mi><mrow><mi>O</mi><mo>⁢</mo><mi>O</mi><mo>⁢</mo><mi>V</mi></mrow></msub></math></td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_t" rowspan="6">Patent train</th>
+<th class="ltx_td ltx_align_center ltx_border_rr ltx_border_t" rowspan="6">Patent dev.</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.34</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.28</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.32</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">90.02</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.58</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.40</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.49</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">90.40</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+LNG</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.32</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.00</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.15</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">91.22</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+PKL</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.62</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.41</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.51</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">90.40</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+PMI</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.65</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.40</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.53</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">89.94</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+PMI+PKL</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.72</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.53</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.62</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">90.37</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_border_l ltx_border_r"/>
+<th class="ltx_td ltx_border_rr"/>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+LNG+PMI</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.42</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.09</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.26</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">91.66</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_border_l ltx_border_r"/>
+<th class="ltx_td ltx_border_rr"/>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+LNG+PMI+PKL</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.48</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.12</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">96.30</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">91.69</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_tt" rowspan="2">Patent train</th>
+<th class="ltx_td ltx_align_center ltx_border_rr ltx_border_tt" rowspan="2">Patent test</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">CF</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">93.98</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">94.49</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">94.23</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">85.19</td></tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">CF+C_POS+LNG+PKL+PMI</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">94.89</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.10</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">95.00</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t">87.89</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_l ltx_border_r ltx_border_tt">CTB train</th>
+<th class="ltx_td ltx_align_center ltx_border_rr ltx_border_tt">Patent dev.</th>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">CF+C_POS+LNG+PKL+PMI</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">89.04</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">90.75</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">89.89</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt">72.80</td></tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_border_b ltx_border_l ltx_border_r ltx_border_tt">CTB train</th>
+<th class="ltx_td ltx_align_center ltx_border_b ltx_border_rr ltx_border_tt">Patent test</th>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_tt">CF+C_POS+LNG+PKL+PMI</td>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_tt">87.88</td>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_tt">89.03</td>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_tt">88.45</td>
+<td class="ltx_td ltx_align_center ltx_border_b ltx_border_r ltx_border_tt">70.89</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection"><span class="ltx_tag ltx_tag_subsection">3.2 </span>Main results</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p class="ltx_p">We use CRF++ <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib11" title="CRF++: Yet Another CRF toolkit." class="ltx_ref">6</a>]</cite> to train our sequence labeling model. <math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.SS2.p1.m1" class="ltx_Math" alttext="Precision" display="inline"><mrow><mi>P</mi><mo>⁢</mo><mi>r</mi><mo>⁢</mo><mi>e</mi><mo>⁢</mo><mi>c</mi><mo>⁢</mo><mi>i</mi><mo>⁢</mo><mi>s</mi><mo>⁢</mo><mi>i</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>n</mi></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.SS2.p1.m2" class="ltx_Math" alttext="recall" display="inline"><mrow><mi>r</mi><mo>⁢</mo><mi>e</mi><mo>⁢</mo><mi>c</mi><mo>⁢</mo><mi>a</mi><mo>⁢</mo><mi>l</mi><mo>⁢</mo><mi>l</mi></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.SS2.p1.m3" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score and <math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.SS2.p1.m4" class="ltx_Math" alttext="R_{OOV}" display="inline"><msub><mi>R</mi><mrow><mi>O</mi><mo>⁢</mo><mi>O</mi><mo>⁢</mo><mi>V</mi></mrow></msub></math> are used to evaluate our word segmentation methods, where <math xmlns="http://www.w3.org/1998/Math/MathML" id="S3.SS2.p1.m5" class="ltx_Math" alttext="R_{OOV}" display="inline"><msub><mi>R</mi><mrow><mi>O</mi><mo>⁢</mo><mi>O</mi><mo>⁢</mo><mi>V</mi></mrow></msub></math> for our purposes means the recall of new words which do not appear in CTB 7.0 but in patent data.</p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<p class="ltx_p">Table <a href="P14-2033.xhtml.html#S3.T2" title="Table 2 ‣ 3.1 Data preparation ‣ 3 Experiments ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> shows the segmentation results on the development and test sets with different feature templates and different training sets. The CTB training set includes the entire CTB 7.0, which has 1.2 million words. The model with the CF feature template is considered to be the baseline system. We conducted 4 groups of experiments based on the different datasets: (1) patent training set + patent development set; (2) patent training set + patent test set; (3) CTB training set + patent development set; (4) CTB training set + patent test set.</p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<p class="ltx_p">The results in Table <a href="P14-2033.xhtml.html#S3.T2" title="Table 2 ‣ 3.1 Data preparation ‣ 3 Experiments ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> show that the models trained on the patent data outperform the models trained on the CTB data by a big margin on both the development and test set, even if the CTB training set is much bigger. That proves the importance of having a training set in the same domain. The results also show that adding the new features we proposed leads to consistent improvement across all experimental conditions, and that the LNG features are the most effective and bring about the largest improvement in accuracy.</p>
+</div>
+</div>
+</div>
+<div id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section"><span class="ltx_tag ltx_tag_section">4 </span>Related work</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p class="ltx_p">Most of the previous work on Chinese word segmentation focused on newswire, and one widely adopted technique is character-based representation combined with sequential learning models  <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib4" title="Chinese Word Segmentation as Character Tagging." class="ltx_ref">22</a>, <a href="P14-2033.xhtml.html#bib.bib5" title="A Maximum Entropy Approach to Chinese Word Segmentation." class="ltx_ref">9</a>, <a href="P14-2033.xhtml.html#bib.bib32" title="An improved Chinese word segmentation system with conditional random field." class="ltx_ref">28</a>, <a href="P14-2033.xhtml.html#bib.bib3" title="Enhancing Chinese Word Segmentation Using Unlabeled Data." class="ltx_ref">14</a>, <a href="P14-2033.xhtml.html#bib.bib21" title="Graph-based Semi-Supervised Model for Joint Chinese Word Segmentation and Part-of-Speech Tagging." class="ltx_ref">24</a>, <a href="P14-2033.xhtml.html#bib.bib7" title="Exploring Representations from Unlabeled Data with Co-training for Chinese Word Segmentation." class="ltx_ref">26</a>, <a href="P14-2033.xhtml.html#bib.bib9" title="Mining Informal Language from Chinese Microtext: Joint Word Recognition and Segmentation." class="ltx_ref">18</a>]</cite>. More recently, word-based models using perceptron learning techniques <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib19" title="Chinese Segmentation Using a Word-based Perceptron Algorithm." class="ltx_ref">27</a>]</cite> also produce very competitive results. There are also some recent successful attempts to combine character-based and word-based techniques <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib33" title="Word-based and character-based word segmentation models: Comparison and combination." class="ltx_ref">15</a>, <a href="P14-2033.xhtml.html#bib.bib22" title="Co-regularizing character-based and word-based models for semi-supervised Chinese word segmentation." class="ltx_ref">23</a>]</cite>.</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p class="ltx_p">As Chinese word segmentation has reached a very high accuracy in the newswire domain, the attention of the field has started to shift to other domains where there are few annotated resources and the problem is more challenging, such as work on the word segmentation of literature data <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib10" title="Unsupervised Domain Adaptation for Joint Segmentation and POS-Tagging." class="ltx_ref">8</a>]</cite> and informal language genres <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib9" title="Mining Informal Language from Chinese Microtext: Joint Word Recognition and Segmentation." class="ltx_ref">18</a>, <a href="P14-2033.xhtml.html#bib.bib8" title="Improving Chinese Word Segmentation on Micro-blog Using Rich Punctuations." class="ltx_ref">25</a>]</cite>. Patents are distinctly different from the above genres as they contain scientific and technical terms that require some special training to understand. There has been very little work in this area, and the only work that is devoted to Chinese word segmentation is <cite class="ltx_cite">[<a href="P14-2033.xhtml.html#bib.bib29" title="Exploration of N-gram Features for the Domain Adaptation of Chinese Word Segmentation." class="ltx_ref">4</a>]</cite>, which reports work on Chinese patent word segmentation with a fairly small test set without any annotated training data in the target domain. They reported an accuracy of 86.42% (<math xmlns="http://www.w3.org/1998/Math/MathML" id="S4.p2.m1" class="ltx_Math" alttext="F_{1}" display="inline"><msub><mi>F</mi><mn>1</mn></msub></math> score), but the results are incomparable with ours as their evaluation data is not available to us. We differ from their work in that we manually segmented a significant amount of data, and trained a model with document-level features designed to capture the characteristics of patent data.</p>
+</div>
+</div>
+<div id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section"><span class="ltx_tag ltx_tag_section">5 </span>Conclusion</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p class="ltx_p">In this paper, we presented an accurate character-based word segmentation model for Chinese patents. Our contributions are two-fold. Our first contribution is that we have annotated a significant amount of Chinese patent data and we plan to release this data once the copyright issues have been cleared. Our second contribution is that we designed document-level features to capture the distributional characteristics of the scientific and technical terms in patents. Experimental results showed that the document-level features we proposed are effective for patent word segmentation.</p>
+</div>
+</div>
+<div id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgments</h2>
+
+<div id="Sx1.p1" class="ltx_para">
+<p class="ltx_p">This paper is supported by the Intelligence Advanced Research Projects Activity (IARPA) via contract NO. D11PC20154. All views expressed in this paper are
+those of the authors and do not necessarily represent the view of IARPA, DoI/NBC, or the U.S. Government.</p>
+</div>
+</div>
+<div id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="L1" class="ltx_biblist">
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[1]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Chen, C. Huang, L. Chang and H. Hsu</span><span class="ltx_text ltx_bib_year">(1996)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Sinica Corpus: Design Methodology for Balanced Corpora.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 167–176</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib34" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[2]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Chen and S. Liu</span><span class="ltx_text ltx_bib_year">(1996)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Word Identification for Mandarin Chinese Sentences.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 101–107</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[3]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. Duan, X. Bai, B. Chang and S. Yu</span><span class="ltx_text ltx_bib_year">(2003)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Chinese word segmentation at Peking University.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 152–155</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib29" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[4]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Z. Guo, Y. Zhang, C. Su and J. Xu</span><span class="ltx_text ltx_bib_year">(2012)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Exploration of N-gram Features for the Domain Adaptation of Chinese Word Segmentation.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 121–131</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p2" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib26" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[5]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">W. Jiang, L. Huang and Q. Liu</span><span class="ltx_text ltx_bib_year">(2009)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Automatic Adaptation of Annotation Standards: Chinese Word Segmentation and POS Tagging - A Case Study.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 522–530</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS1.SSS0.P2.p1" title="Character type N-gram features ‣ 2.1 Character features (CF) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>.
+</span></li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[6]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">T. Kudo</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">CRF++: Yet Another CRF toolkit.</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S3.SS2.p1" title="3.2 Main results ‣ 3 Experiments ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.2</span></a>.
+</span></li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[7]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Lafferty, A. McCallum and F. Pereira</span><span class="ltx_text ltx_bib_year">(2001)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Conditional random fields: Probabilistic models for segmenting and labeling sequence data.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 282–289</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.p2" title="2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.
+</span></li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[8]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Y. Liu and Y. Zhang</span><span class="ltx_text ltx_bib_year">(2012)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Unsupervised Domain Adaptation for Joint Segmentation and POS-Tagging.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 745–754</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p2" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[9]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. K. Low, H. T. Ng and W. Guo</span><span class="ltx_text ltx_bib_year">(2005)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Maximum Entropy Approach to Chinese Word Segmentation.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 970–979</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[10]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. T. Ng and J. K. Low</span><span class="ltx_text ltx_bib_year">(2004)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Chinese Part-of-Speech Tagging: One-at-a-Time or All-at-Once? Word-Based or Character-Based?</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 277–284</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS1.SSS0.P2.p1" title="Character type N-gram features ‣ 2.1 Character features (CF) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>,
+<a href="P14-2033.xhtml.html#S2.SS1.p1" title="2.1 Character features (CF) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>.
+</span></li>
+<li id="bib.bib27" class="ltx_bibitem ltx_bib_book"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[11]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Packard</span><span class="ltx_text ltx_bib_year">(2000)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Morphology of Chinese: a cognitive and linguistic approach</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Cambridge University Press</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS2.p1" title="2.2 POS of single-character words (C_POS) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.2</span></a>.
+</span></li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[12]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">F. Peng, F. Feng and A. McCallum</span><span class="ltx_text ltx_bib_year">(2004)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Chinese Segmentation and New Word Detection using Conditional Random Fields.</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_article"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[13]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">R. Sproat, C. Shih, W. Gale and N. Chang</span><span class="ltx_text ltx_bib_year">(1996)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Stochastic Finite-State Word-Segmentation Algorithm for Chinese.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Computational Linguistics</span> <span class="ltx_text ltx_bib_volume">22</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 377–404</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[14]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">W. Sun and J. Xu</span><span class="ltx_text ltx_bib_year">(2011)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Enhancing Chinese Word Segmentation Using Unlabeled Data.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 970–979</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS3.SSS0.P3.p1" title="Pointwise Mutual information (PMI) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.3</span></a>,
+<a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib33" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[15]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">W. Sun</span><span class="ltx_text ltx_bib_year">(2010)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Word-based and character-based word segmentation models: Comparison and combination.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 1211–1219</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib20" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[16]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">W. Sun</span><span class="ltx_text ltx_bib_year">(2011)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Stacked Sub-Word Model for Joint Chinese Word Segmentation and Part-of-Speech Tagging.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 1385–1394</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib16" class="ltx_bibitem ltx_bib_article"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[17]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">B. K. T’sou, H. Lin, G. Liu, T. Chan, J. Hu, C. Chew and J. K.P. Tse</span><span class="ltx_text ltx_bib_year">(1997)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Synchronous Chinese Language Corpus from Different Speech Communities: Construction and Application.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Journal of Computational Linguistics and Chinese Language Processing</span> <span class="ltx_text ltx_bib_volume">2</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 91–104</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[18]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">A. Wang and M. Kan</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Mining Informal Language from Chinese Microtext: Joint Word Recognition and Segmentation.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 731–741</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>,
+<a href="P14-2033.xhtml.html#S4.p2" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[19]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">F. Xia</span><span class="ltx_text ltx_bib_year">(2000)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The segmentation guidelines for the Penn Chinese Treebank (3.0).</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS2.p1" title="2.2 POS of single-character words (C_POS) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.2</span></a>,
+<a href="P14-2033.xhtml.html#S3.SS1.p1" title="3.1 Data preparation ‣ 3 Experiments ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.1</span></a>.
+</span></li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_article"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[20]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">N. Xue, F. Xia, F. Chiou and M. Palmer</span><span class="ltx_text ltx_bib_year">(2005)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Penn Chinese TreeBank: Phrase Structure Annotation of a Large Corpus.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Natural Language Engineering</span> <span class="ltx_text ltx_bib_volume">11</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 207–238</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.
+</span></li>
+<li id="bib.bib28" class="ltx_bibitem ltx_bib_thesis"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[21]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">N. Xue</span><span class="ltx_text ltx_bib_year">(2000)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Defining and identifying words in Chinese.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_type">Ph.D. Thesis</span>, <span class="ltx_text ltx_bib_publisher">University of Delaware</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS2.p1" title="2.2 POS of single-character words (C_POS) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.2</span></a>.
+</span></li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[22]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">N. Xue</span><span class="ltx_text ltx_bib_year">(2003)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Chinese Word Segmentation as Character Tagging.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">International Journal of Computational Linguistics and Chinese Language Processing</span> <span class="ltx_text ltx_bib_volume">8</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 29–48</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>,
+<a href="P14-2033.xhtml.html#S2.SS1.p1" title="2.1 Character features (CF) ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.1</span></a>,
+<a href="P14-2033.xhtml.html#S2.p1" title="2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>,
+<a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib22" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[23]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">X. Zeng, D. F. Wong, L. S. Chao and I. Trancoso</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Co-regularizing character-based and word-based models for semi-supervised Chinese word segmentation.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 171–176</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib21" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[24]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">X. Zeng, D. F. Wong, L. S. Chao and I. Trancoso</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Graph-based Semi-Supervised Model for Joint Chinese Word Segmentation and Part-of-Speech Tagging.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 770–779</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S1.p1" title="1 Introduction ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>,
+<a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[25]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">L. Zhang, L. Li, Z. He, H. Wang and N. Sun</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Improving Chinese Word Segmentation on Micro-blog Using Rich Punctuations.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 177–182</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p2" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[26]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">L. Zhang, H. Wang, X. Sun and M. Mansur</span><span class="ltx_text ltx_bib_year">(2013)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Exploring Representations from Unlabeled Data with Co-training for Chinese Word Segmentation.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 311–321</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S2.SS3.SSS0.P3.p1" title="Pointwise Mutual information (PMI) ‣ 2.3 Document-level features ‣ 2 Method ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2.3</span></a>,
+<a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[27]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Y. Zhang and S. Clark</span><span class="ltx_text ltx_bib_year">(2007)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Chinese Segmentation Using a Word-based Perceptron Algorithm.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 840–847</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+<li id="bib.bib32" class="ltx_bibitem ltx_bib_inproceedings"><span class="ltx_bibtag ltx_bib_key ltx_role_refnum">[28]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. Zhao, C. Huang and M. Li</span><span class="ltx_text ltx_bib_year">(2006)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">An improved Chinese word segmentation system with conditional random field.</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 162–165</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="P14-2033.xhtml.html#S4.p1" title="4 Related work ‣ Effective Document-Level Features for Chinese Patent Word Segmentation" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>.
+</span></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Wed Jun 11 17:42:10 2014 by <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]"/></a></div></div>
+</div>
+</body>
+</html>
